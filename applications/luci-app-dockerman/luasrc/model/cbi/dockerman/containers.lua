@@ -78,7 +78,8 @@ function get_containers()
 			local ip = require "luci.ip"
 			for _,v2 in ipairs(v.Ports) do
 				-- display ipv4 only
-				if ip.new(v2.IP or "0.0.0.0"):is4() then
+				local ip_obj = ip.new(v2.IP or "0.0.0.0")
+				if ip_obj and ip_obj:is4() then
 					data[index]["_ports"] = (data[index]["_ports"] and (data[index]["_ports"] .. ", ") or "")
 					.. ((v2.PublicPort and v2.Type and v2.Type == "tcp") and ('<a href="javascript:void(0);" onclick="window.open((window.location.origin.match(/^(.+):\\d+$/) && window.location.origin.match(/^(.+):\\d+$/)[1] || window.location.origin) + \':\' + '.. v2.PublicPort ..', \'_blank\');">') or "")
 					.. (v2.PublicPort and (v2.PublicPort .. ":") or "")  .. (v2.PrivatePort and (v2.PrivatePort .."/") or "") .. (v2.Type and v2.Type or "")
@@ -86,9 +87,11 @@ function get_containers()
 				end
 			end
 		end
-		for ii,iv in ipairs(images) do
-			if iv.Id == v.ImageID then
-				data[index]["_image"] = (iv.RepoTags and iv.RepoTags[1]) or (iv.RepoDigests and next(iv.RepoDigests) and (iv.RepoDigests[1]:gsub("(.-)@.+", "%1") .. ":&lt;none&gt;")) or "&lt;none&gt;:&lt;none&gt;"
+		if type(images) == "table" then
+			for ii,iv in ipairs(images) do
+				if iv.Id == v.ImageID then
+					data[index]["_image"] = (iv.RepoTags and iv.RepoTags[1]) or (iv.RepoDigests and next(iv.RepoDigests) and (iv.RepoDigests[1]:gsub("(.-)@.+", "%1") .. ":&lt;none&gt;")) or "&lt;none&gt;:&lt;none&gt;"
+				end
 			end
 		end
 		data[index]["_id_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'  class="dockerman_link" title="'..translate("Container detail")..'">'.. data[index]["_name"] .. "<br><font color='#9f9f9f'>ID: " ..	data[index]["_id"]
