@@ -177,6 +177,8 @@ function action_events()
 	local query ={}
 
 	local dk = docker.new()
+	-- Get events from last 24 hours
+	query["since"] = os.time() - 86400
 	query["until"] = os.time()
 	local events = dk:events({query = query})
 
