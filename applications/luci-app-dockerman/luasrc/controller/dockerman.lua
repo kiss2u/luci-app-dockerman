@@ -182,7 +182,7 @@ function action_events()
 	query["until"] = os.time()
 	local events = dk:events({query = query})
 
-	if events.code == 200 then
+	if events.code == 200 and type(events.body) == "table" then
 		for _, v in ipairs(events.body) do
 			local date = "unknown"
 			if v and v.time then
