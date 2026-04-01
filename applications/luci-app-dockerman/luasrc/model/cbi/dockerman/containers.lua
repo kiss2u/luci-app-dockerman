@@ -71,6 +71,9 @@ function get_containers()
 		-- end
 
 		if v.Ports and next(v.Ports) ~= nil then
+			if not data[index] then
+				data[index] = {}
+			end
 			data[index]["_ports"] = nil
 			local ip = require "luci.ip"
 			for _,v2 in ipairs(v.Ports) do
@@ -98,21 +101,25 @@ function get_containers()
 					local v_sorce_d, v_dest_d
 					local v_sorce = ""
 					local v_dest = ""
-					for v_sorce_d in v2["Source"]:gmatch('[^/]+') do
-						if v_sorce_d and #v_sorce_d > 12 then
-							v_sorce = v_sorce .. "/" .. v_sorce_d:sub(1,8) .. ".."
-						else
-							v_sorce = v_sorce .."/".. v_sorce_d
+					if v2["Source"] then
+						for v_sorce_d in v2["Source"]:gmatch('[^/]+') do
+							if v_sorce_d and #v_sorce_d > 12 then
+								v_sorce = v_sorce .. "/" .. v_sorce_d:sub(1,8) .. ".."
+							else
+								v_sorce = v_sorce .."/".. v_sorce_d
+							end
 						end
 					end
-					for v_dest_d in v2["Destination"]:gmatch('[^/]+') do
-						if v_dest_d and #v_dest_d > 12 then
-							v_dest = v_dest .. "/" .. v_dest_d:sub(1,8) .. ".."
-						else
-							v_dest = v_dest .."/".. v_dest_d
+					if v2["Destination"] then
+						for v_dest_d in v2["Destination"]:gmatch('[^/]+') do
+							if v_dest_d and #v_dest_d > 12 then
+								v_dest = v_dest .. "/" .. v_dest_d:sub(1,8) .. ".."
+							else
+								v_dest = v_dest .."/".. v_dest_d
+							end
 						end
 					end
-					data[index]["_mounts"] = (data[index]["_mounts"] and (data[index]["_mounts"] .. "<br>") or "") .. '<span title="'.. v2.Source.. "￫" .. v2.Destination .. '" ><a href="'..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'/file?path='..v2["Destination"]..'">' .. v_sorce .. "￫" .. v_dest..'</a></span>'
+					data[index]["_mounts"] = (data[index]["_mounts"] and (data[index]["_mounts"] .. "<br>") or "") .. '<span title="'.. (v2.Source or "") .. "￫" .. (v2.Destination or "") .. '" ><a href="'..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'/file?path='.. (v2["Destination"] or "") ..'">' .. v_sorce .. "￫" .. v_dest..'</a></span>'
 				end
 			end
 		end
