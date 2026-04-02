@@ -71,11 +71,15 @@ function get_containers()
 		-- end
 
 		if v.Ports and next(v.Ports) ~= nil then
+			if not data[index] then
+				data[index] = {}
+			end
 			data[index]["_ports"] = nil
 			local ip = require "luci.ip"
 			for _,v2 in ipairs(v.Ports) do
 				-- display ipv4 only
-				if ip.new(v2.IP or "0.0.0.0"):is4() then
+				local ip_obj = ip.new(v2.IP or "0.0.0.0")
+				if ip_obj and ip_obj:is4() then
 					data[index]["_ports"] = (data[index]["_ports"] and (data[index]["_ports"] .. ", ") or "")
 					.. ((v2.PublicPort and v2.Type and v2.Type == "tcp") and ('<a href="javascript:void(0);" onclick="window.open((window.location.origin.match(/^(.+):\\d+$/) && window.location.origin.match(/^(.+):\\d+$/)[1] || window.location.origin) + \':\' + '.. v2.PublicPort ..', \'_blank\');">') or "")
 					.. (v2.PublicPort and (v2.PublicPort .. ":") or "")  .. (v2.PrivatePort and (v2.PrivatePort .."/") or "") .. (v2.Type and v2.Type or "")
@@ -83,9 +87,11 @@ function get_containers()
 				end
 			end
 		end
-		for ii,iv in ipairs(images) do
-			if iv.Id == v.ImageID then
-				data[index]["_image"] = (iv.RepoTags and iv.RepoTags[1]) or (iv.RepoDigests and next(iv.RepoDigests) and (iv.RepoDigests[1]:gsub("(.-)@.+", "%1") .. ":&lt;none&gt;")) or "&lt;none&gt;:&lt;none&gt;"
+		if type(images) == "table" then
+			for ii,iv in ipairs(images) do
+				if iv.Id == v.ImageID then
+					data[index]["_image"] = (iv.RepoTags and iv.RepoTags[1]) or (iv.RepoDigests and next(iv.RepoDigests) and (iv.RepoDigests[1]:gsub("(.-)@.+", "%1") .. ":&lt;none&gt;")) or "&lt;none&gt;:&lt;none&gt;"
+				end
 			end
 		end
 		data[index]["_id_name"] = '<a href='..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'  class="dockerman_link" title="'..translate("Container detail")..'">'.. data[index]["_name"] .. "<br><font color='#9f9f9f'>ID: " ..	data[index]["_id"]
@@ -98,21 +104,25 @@ function get_containers()
 					local v_sorce_d, v_dest_d
 					local v_sorce = ""
 					local v_dest = ""
-					for v_sorce_d in v2["Source"]:gmatch('[^/]+') do
-						if v_sorce_d and #v_sorce_d > 12 then
-							v_sorce = v_sorce .. "/" .. v_sorce_d:sub(1,8) .. ".."
-						else
-							v_sorce = v_sorce .."/".. v_sorce_d
+					if v2["Source"] then
+						for v_sorce_d in v2["Source"]:gmatch('[^/]+') do
+							if v_sorce_d and #v_sorce_d > 12 then
+								v_sorce = v_sorce .. "/" .. v_sorce_d:sub(1,8) .. ".."
+							else
+								v_sorce = v_sorce .."/".. v_sorce_d
+							end
 						end
 					end
-					for v_dest_d in v2["Destination"]:gmatch('[^/]+') do
-						if v_dest_d and #v_dest_d > 12 then
-							v_dest = v_dest .. "/" .. v_dest_d:sub(1,8) .. ".."
-						else
-							v_dest = v_dest .."/".. v_dest_d
+					if v2["Destination"] then
+						for v_dest_d in v2["Destination"]:gmatch('[^/]+') do
+							if v_dest_d and #v_dest_d > 12 then
+								v_dest = v_dest .. "/" .. v_dest_d:sub(1,8) .. ".."
+							else
+								v_dest = v_dest .."/".. v_dest_d
+							end
 						end
 					end
-					data[index]["_mounts"] = (data[index]["_mounts"] and (data[index]["_mounts"] .. "<br>") or "") .. '<span title="'.. v2.Source.. "￫" .. v2.Destination .. '" ><a href="'..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'/file?path='..v2["Destination"]..'">' .. v_sorce .. "￫" .. v_dest..'</a></span>'
+					data[index]["_mounts"] = (data[index]["_mounts"] and (data[index]["_mounts"] .. "<br>") or "") .. '<span title="'.. (v2.Source or "") .. "￫" .. (v2.Destination or "") .. '" ><a href="'..luci.dispatcher.build_url("admin/docker/container/"..v.Id)..'/file?path='.. (v2["Destination"] or "") ..'">' .. v_sorce .. "￫" .. v_dest..'</a></span>'
 				end
 			end
 		end
